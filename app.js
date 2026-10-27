@@ -44,6 +44,8 @@
   };
   var PASS_SCALED = 720;
   var EXAM_SECONDS = 120 * 60;
+  var DIFF = { easy: { label: "Easy", level: 1 }, medium: { label: "Medium", level: 2 }, hard: { label: "Hard", level: 3 } };
+  var DIFF_ORDER = ["easy", "medium", "hard"];
   var LS_SESSION = "ccarf.session.v1";
   var LS_ATTEMPTS = "ccarf.attempts.v1";
 
@@ -96,6 +98,10 @@
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function scaledFromPct(p) { return Math.round(100 + 900 * p); }
+  function diffOf(q) { return DIFF[q.difficulty] ? q.difficulty : "medium"; }
+  function diffPill(d) { d = DIFF[d] ? d : "medium"; return '<span class="pill diff-' + d + '">' + DIFF[d].label + "</span>"; }
+  function diffMix(qs) { var c = { easy: 0, medium: 0, hard: 0 }; qs.forEach(function (q) { c[diffOf(q)]++; }); return c; }
+  function mixHtml(c) { return DIFF_ORDER.map(function (d) { return '<span class="mixnum diff-' + d + '">' + c[d] + " " + DIFF[d].label.toLowerCase() + "</span>"; }).join(" · "); }
 
   function stopTimer() { if (timerHandle) { clearInterval(timerHandle); timerHandle = null; } }
 
@@ -123,7 +129,7 @@
     var resumable = session && !session.finished;
     var html = "";
     html += '<section class="hero"><h1>Claude Certified Architect – Foundations</h1>' +
-      '<p>Interactive practice for exam <b>CCAR-F</b>. Five full-length mock exams that mirror the real format (60 scenario-based items, 120 minutes, 4 of 6 scenarios), plus the 12 official sample questions from the Exam Guide. Everything runs locally; your attempts are saved in this browser.</p></section>';
+      '<p>Interactive practice for exam <b>CCAR-F</b>. Five full-length mock exams that mirror the real format (60 scenario-based items, 120 minutes, 4 of 6 scenarios), plus the 12 official sample questions from the Exam Guide and a difficulty ladder (every question is tagged Easy, Medium or Hard). Everything runs locally; your attempts are saved in this browser.</p></section>';
 
     if (resumable) {
       var done = Object.keys(session.answers).filter(function (k) { return session.answers[k].length; }).length;
@@ -143,6 +149,7 @@
     html += customCard();
     html += "</div>";
 
+    html += ladderHtml();
     html += historyHtml();
     html += guideHtml();
     html += '<p class="muted small" style="margin-top:28px">Mock questions are original practice items written against the public Exam Guide blueprint (task statements, scenarios, sample-question style). The real exam content is confidential under Anthropic\'s NDA and is not reproduced here. The scaled score shown for mocks is a rough estimate only; the real exam uses equated scaling.</p>';
@@ -156,16 +163,38 @@
     return '<div class="card exam-card"><div class="row"><h3 style="margin:0">' + esc(ex.title) + "</h3>" + (ex.official ? '<span class="pill ok">Official</span>' : "") + '<div class="spacer"></div><span class="pill">' + ex.questions.length + " items</span></div>" +
       (ex.subtitle ? '<div class="muted small">' + esc(ex.subtitle) + "</div>" : "") +
       '<div class="scen">' + sc + "</div>" +
+      (ex.official ? "" : '<div class="muted small">Mix: ' + mixHtml(diffMix(ex.questions)) + "</div>") +
       '<div class="best">' + (last.length ? "Attempts: " + last.length + " · Best est. score: <b>" + best + "</b>" : "Not attempted yet") + "</div>" +
       '<div class="row" style="margin-top:auto"><button class="btn primary" data-act="start" data-id="' + ex.id + '">Start</button></div></div>';
   }
   function customCard() {
     var opts = Object.keys(DOMAINS).map(function (d) { return '<option value="' + d + '">D' + d + " · " + esc(DOMAINS[d].name) + "</option>"; }).join("");
+    var diffs = DIFF_ORDER.map(function (d) { return '<option value="' + d + '">Level ' + DIFF[d].level + " · " + DIFF[d].label + "</option>"; }).join("");
     var total = DATA.exams.reduce(function (n, e) { return n + e.questions.length; }, 0);
     return '<div class="card exam-card"><h3 style="margin:0">Targeted practice</h3><div class="muted small">Draw random questions from all ' + total + ' mock items, with instant feedback.</div>' +
-      '<label class="small">Domain<br><select id="cp-domain" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)"><option value="0">All domains</option>' + opts + "</select></label>" +
-      '<label class="small">Questions<br><select id="cp-count" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)"><option>10</option><option selected>20</option><option>30</option></select></label>' +
+      '<label class="small">Domain<br><select id="cp-domain" class="sel"><option value="0">All domains</option>' + opts + "</select></label>" +
+      '<label class="small">Difficulty<br><select id="cp-diff" class="sel"><option value="">All levels</option>' + diffs + "</select></label>" +
+      '<label class="small">Questions<br><select id="cp-count" class="sel"><option>10</option><option selected>20</option><option>30</option></select></label>' +
       '<div class="row" style="margin-top:auto"><button class="btn primary" data-act="custom">Start practice</button></div></div>';
+  }
+  function ladderHtml() {
+    var pool = [];
+    DATA.exams.forEach(function (ex) { pool = pool.concat(ex.questions); });
+    var c = diffMix(pool);
+    var desc = {
+      easy: "Recall or one-step application of a guide principle. The distractors are clearly wrong.",
+      medium: "Scenario judgment: a plausible distractor loses to a stated constraint or a guide principle. The bulk of the real exam.",
+      hard: "Two defensible options separated by one detail in the stem, numeric reasoning, or a select-two with a near miss."
+    };
+    var cards = DIFF_ORDER.map(function (d) {
+      var done = attempts.filter(function (a) { return a.examId === "ladder-" + d; }).length;
+      return '<div class="card exam-card"><div class="row"><h3 style="margin:0">Level ' + DIFF[d].level + " · " + DIFF[d].label + '</h3><div class="spacer"></div><span class="pill">' + c[d] + " items</span></div>" +
+        '<div class="muted small">' + desc[d] + "</div>" +
+        '<div class="best">' + (done ? "Attempts: " + done : "Not attempted yet") + "</div>" +
+        '<div class="row" style="margin-top:auto"><button class="btn primary" data-act="ladder" data-d="' + d + '" data-mode="practice">Practice</button>' +
+        '<button class="btn" data-act="ladder" data-d="' + d + '" data-mode="exam">Timed · 2 min/item</button></div></div>';
+    }).join("");
+    return '<h2 class="section-title">Difficulty ladder</h2><p class="muted small" style="margin:-6px 0 12px">Every mock question is tagged Easy, Medium or Hard. Climb the ladder first, then take the full mocks, which mix all three levels the way the real exam does. Ladder sets reuse the mock questions, so expect repeats.</p><div class="grid cols-3">' + cards + "</div>";
   }
   function historyHtml() {
     if (!attempts.length) return "";
@@ -213,6 +242,7 @@
     var act = t.getAttribute("data-act");
     if (act === "start") return openStart(t.getAttribute("data-id"));
     if (act === "custom") return startCustom();
+    if (act === "ladder") return startLadder(t.getAttribute("data-d"), t.getAttribute("data-mode"));
     if (act === "discard") { if (confirm("Discard the session in progress?")) { session = null; localStorage.removeItem(LS_SESSION); viewHome(); } return; }
     if (act === "clear-history") { if (confirm("Delete all saved attempts?")) { attempts = []; saveAttempts(); viewHome(); } return; }
     if (act === "close-modal") return closeModal();
@@ -240,11 +270,19 @@
   }
   function startCustom() {
     var d = parseInt(document.getElementById("cp-domain").value, 10);
+    var df = document.getElementById("cp-diff").value;
     var n = parseInt(document.getElementById("cp-count").value, 10);
     var pool = [];
-    DATA.exams.forEach(function (ex) { ex.questions.forEach(function (q) { if (!d || q.domain === d) pool.push(q.key); }); });
+    DATA.exams.forEach(function (ex) { ex.questions.forEach(function (q) { if ((!d || q.domain === d) && (!df || diffOf(q) === df)) pool.push(q.key); }); });
     var keys = shuffle(pool).slice(0, n);
-    beginSession("Targeted practice" + (d ? " · D" + d : " · all domains"), "custom", keys, "practice", 0);
+    if (!keys.length) { alert("No questions match that combination."); return; }
+    beginSession("Targeted practice" + (d ? " · D" + d : " · all domains") + (df ? " · " + DIFF[df].label : ""), "custom", keys, "practice", 0);
+  }
+  function startLadder(d, mode) {
+    var pool = [];
+    DATA.exams.forEach(function (ex) { ex.questions.forEach(function (q) { if (diffOf(q) === d) pool.push(q.key); }); });
+    var keys = shuffle(pool);
+    beginSession("Difficulty ladder · Level " + DIFF[d].level + " (" + DIFF[d].label + ")", "ladder-" + d, keys, mode, keys.length * 120);
   }
   function beginSession(title, examId, keys, mode, seconds) {
     if (session && !session.finished && !confirm("This replaces the session in progress. Continue?")) return;
@@ -302,7 +340,7 @@
     var html = '<div class="progress"><i style="width:' + Math.round(answered / s.qkeys.length * 100) + '%"></i></div><div class="exam-layout"><div>' +
       '<div class="card">' +
       '<div class="qhead"><span class="qnum">Question ' + (s.idx + 1) + ' <span class="muted">of ' + s.qkeys.length + '</span></span><span class="pill accent">Scenario ' + q.scenario + '</span><span class="pill">D' + q.domain + "</span>" +
-      (practice ? '<span class="pill">TS ' + esc(q.ts) + "</span>" : "") +
+      (practice ? '<span class="pill">TS ' + esc(q.ts) + "</span>" + diffPill(q.difficulty) : "") +
       '<div class="spacer"></div><button class="btn small" data-run="flag" aria-pressed="' + !!s.flags[key] + '">' + (s.flags[key] ? "⚑ Flagged" : "⚐ Flag for review") + "</button></div>" +
       '<details class="scenario-box"' + (firstOfScenario ? " open" : "") + "><summary>Scenario: " + esc(scen.title) + "</summary><p>" + esc(scen.context) + "</p></details>" +
       '<div class="stem">' + md(q.stem) + "</div>" +
@@ -395,17 +433,17 @@
 
   function finish(timeUp) {
     stopTimer();
-    var s = session, correct = 0, byDomain = {}, byScen = {}, byTs = {};
+    var s = session, correct = 0, byDomain = {}, byScen = {}, byTs = {}, byDiff = {};
     s.qkeys.forEach(function (k) {
       var q = QINDEX[k], ok = isCorrect(q, s.answers[k]);
       if (ok) correct++;
-      [[byDomain, q.domain], [byScen, q.scenario], [byTs, q.ts]].forEach(function (p) {
+      [[byDomain, q.domain], [byScen, q.scenario], [byTs, q.ts], [byDiff, diffOf(q)]].forEach(function (p) {
         var m = p[0], id = p[1]; m[id] = m[id] || { c: 0, t: 0 }; m[id].t++; if (ok) m[id].c++;
       });
     });
     var pct = correct / s.qkeys.length;
     var att = { id: s.id, examId: s.examId, title: s.title, mode: s.mode, date: Date.now(), total: s.qkeys.length, correct: correct, pct: pct, scaled: scaledFromPct(pct),
-      durationSec: Math.round((Date.now() - s.startedAt) / 1000), timeUp: !!timeUp, byDomain: byDomain, byScen: byScen, byTs: byTs,
+      durationSec: Math.round((Date.now() - s.startedAt) / 1000), timeUp: !!timeUp, byDomain: byDomain, byScen: byScen, byTs: byTs, byDiff: byDiff,
       qkeys: s.qkeys, answers: s.answers, flags: s.flags };
     attempts.push(att); saveAttempts();
     s.finished = true;
@@ -422,22 +460,29 @@
     var mockish = a.total >= 30;
     var dom = Object.keys(DOMAINS).filter(function (d) { return a.byDomain[d]; }).map(function (d) { return barRow("D" + d + " · " + DOMAINS[d].name, a.byDomain[d]); }).join("");
     var scen = Object.keys(a.byScen).map(function (s) { return barRow("S" + s + " · " + SCEN[s].title, a.byScen[s]); }).join("");
+    var byDiff = a.byDiff || (function () { // attempts saved before difficulty tracking existed
+      var m = {};
+      a.qkeys.forEach(function (k) { var q = QINDEX[k], d = diffOf(q); m[d] = m[d] || { c: 0, t: 0 }; m[d].t++; if (isCorrect(q, a.answers[k])) m[d].c++; });
+      return m;
+    })();
+    var diff = DIFF_ORDER.filter(function (d) { return byDiff[d]; }).map(function (d) { return barRow("Level " + DIFF[d].level + " · " + DIFF[d].label, byDiff[d]); }).join("");
+    var isSet = a.examId === "custom" || a.examId.indexOf("ladder-") === 0;
     var weak = Object.keys(a.byTs).map(function (k) { var v = a.byTs[k]; return { k: k, v: v, p: v.c / v.t }; }).filter(function (x) { return x.p < 0.67; }).sort(function (x, y) { return x.p - y.p; });
     var weakHtml = weak.length ? weak.map(function (x) { return '<li><b>' + x.k + "</b> " + esc(TS[x.k] || "") + ' <span class="pill bad">' + x.v.c + "/" + x.v.t + "</span></li>"; }).join("") : '<li class="muted">No weak task statements detected. Nice.</li>';
 
-    var html = '<div class="row" style="margin-bottom:12px"><a class="btn small" href="#/">← Home</a><div class="spacer"></div><button class="btn small primary" data-res="retake" data-id="' + a.examId + '">' + (a.examId === "custom" ? "New practice" : "Retake") + "</button></div>" +
+    var html = '<div class="row" style="margin-bottom:12px"><a class="btn small" href="#/">← Home</a><div class="spacer"></div><button class="btn small primary" data-res="retake" data-id="' + a.examId + '">' + (isSet ? "New practice" : "Retake") + "</button></div>" +
       '<div class="card"><div class="score-hero"><div class="scorering" style="background:conic-gradient(' + col + " " + deg + 'deg,var(--surface-2) 0)"><div><span><b>' + Math.round(a.pct * 100) + "%</b>correct</span></div></div>" +
       "<div><h1 style=\"margin-bottom:.2em\">" + esc(a.title) + "</h1><p style=\"margin-bottom:.3em\">" + a.correct + " of " + a.total + " correct · " + (a.mode === "exam" ? "Exam mode" : "Practice mode") + " · " + fmtTime(a.durationSec) + " used" + (a.timeUp ? " (time expired)" : "") + "</p>" +
       (mockish ? '<p style="margin:0"><span class="pill ' + (pass ? "ok" : "bad") + '">Estimated scaled score ≈ ' + a.scaled + (pass ? " · would pass" : " · below 720") + '</span></p><p class="muted small" style="margin-top:6px">Rough linear estimate (100 + 900 × fraction correct). The real exam equates scores across forms; 720 corresponds to roughly 69% on this simple scale. Aim for 80%+ on mocks for margin.</p>' :
         '<p class="muted small">Short set: scaled-score estimate not shown.</p>') + "</div></div></div>" +
-      '<div class="grid cols-2" style="margin-top:16px"><div class="card"><h3>By domain</h3><div class="weights">' + dom + '</div></div><div class="card"><h3>By scenario</h3><div class="weights">' + scen + "</div></div></div>" +
+      '<div class="grid cols-3 results-grid" style="margin-top:16px"><div class="card"><h3>By domain</h3><div class="weights">' + dom + '</div></div><div class="card"><h3>By scenario</h3><div class="weights">' + scen + '</div></div><div class="card"><h3>By difficulty</h3><div class="weights">' + diff + "</div></div></div>" +
       '<div class="card" style="margin-top:16px"><h3>Where to study next</h3><ul style="margin:0;padding-left:1.2em">' + weakHtml + "</ul></div>" +
       '<h2 class="section-title">Review answers</h2><div class="filters" id="filters">' + ["all", "incorrect", "flagged", "unanswered"].map(function (f) { return '<button class="btn small ' + (reviewFilter === f ? "active" : "") + '" data-res="filter" data-f="' + f + '">' + f[0].toUpperCase() + f.slice(1) + "</button>"; }).join("") + '</div><div id="review">' + reviewHtml(a) + "</div>";
     $app.innerHTML = html;
     $app.onclick = function (e) {
       var t = e.target.closest("[data-res]"); if (!t) return;
       if (t.getAttribute("data-res") === "filter") { reviewFilter = t.getAttribute("data-f"); viewResults(id); }
-      if (t.getAttribute("data-res") === "retake") { var ex = t.getAttribute("data-id"); location.hash = "#/"; if (ex === "custom") return; setTimeout(function () { openStart(ex); }, 0); }
+      if (t.getAttribute("data-res") === "retake") { var ex = t.getAttribute("data-id"); location.hash = "#/"; if (ex === "custom" || ex.indexOf("ladder-") === 0) return; setTimeout(function () { openStart(ex); }, 0); }
     };
   }
   function barRow(label, v) {
@@ -457,7 +502,7 @@
         if (isAns) cls += " correct"; else if (sel) cls += " wrong";
         return '<div class="' + cls + '"><span class="letter">' + o.id + '</span><span class="text">' + inline(o.text) + '</span><span class="tag">' + (isAns && sel ? "✓ your answer" : isAns ? "correct" : sel ? "your answer" : "") + "</span></div>";
       }).join("");
-      out.push('<div class="card review-item"><div class="qhead"><span class="qnum">Q' + (i + 1) + '</span><span class="pill ' + (ok ? "ok" : ans.length ? "bad" : "warn") + '">' + (ok ? "Correct" : ans.length ? "Incorrect" : "Unanswered") + '</span><span class="pill accent">S' + q.scenario + '</span><span class="pill">D' + q.domain + '</span><span class="pill">TS ' + esc(q.ts) + "</span>" + (a.flags[k] ? '<span class="pill warn">⚑ flagged</span>' : "") + "</div>" +
+      out.push('<div class="card review-item"><div class="qhead"><span class="qnum">Q' + (i + 1) + '</span><span class="pill ' + (ok ? "ok" : ans.length ? "bad" : "warn") + '">' + (ok ? "Correct" : ans.length ? "Incorrect" : "Unanswered") + '</span><span class="pill accent">S' + q.scenario + '</span><span class="pill">D' + q.domain + '</span><span class="pill">TS ' + esc(q.ts) + "</span>" + diffPill(q.difficulty) + (a.flags[k] ? '<span class="pill warn">⚑ flagged</span>' : "") + "</div>" +
         '<div class="stem">' + md(q.stem) + '</div><div class="options ' + (q.type === "multi" ? "multi" : "") + '">' + opts + "</div>" + explainHtml(q, ans).replace(/<h3>.*?<\/h3>/, "<h3>Explanation</h3>") + "</div>");
     });
     return out.length ? out.join("") : '<div class="empty">Nothing in this filter.</div>';

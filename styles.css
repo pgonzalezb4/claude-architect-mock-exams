@@ -86,6 +86,12 @@ main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
 .pill.ok { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
 .pill.bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
 .pill.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.pill.diff-easy { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.pill.diff-medium { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.pill.diff-hard { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.mixnum { font-weight: 600; }
+.mixnum.diff-easy { color: var(--ok); } .mixnum.diff-medium { color: var(--warn); } .mixnum.diff-hard { color: var(--bad); }
+.sel { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
 
 /* home */
 .hero { margin-bottom: 24px; }

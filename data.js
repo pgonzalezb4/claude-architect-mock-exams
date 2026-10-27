@@ -244,7 +244,7 @@ window.DATA = {
      "domain": 2,
      "ts": "2.1",
      "tests": "System prompt wording can override well-written tool descriptions",
-     "difficulty": "medium",
+     "difficulty": "hard",
      "type": "single",
      "select": 1,
      "stem": "You added a `get_invoice` tool with a detailed description (\"Use for charge disputes, duplicate charges, and line-item questions; takes an invoice ID or order ID...\"). It was selected correctly in testing. After a system-prompt revision that included the line \"When customers ask about charges or billing, always look up their order first to confirm the details,\" the agent now calls `lookup_order` for about 70% of billing questions that need invoice line items. What is the most likely cause and fix?",
@@ -352,7 +352,7 @@ window.DATA = {
       "A"
      ],
      "explanation": {
-      "correct": "A pre-execution interception hook gives deterministic compliance and can redirect to an alternative workflow, which a prompt rule cannot guarantee.",
+      "correct": "A pre-execution interception hook (`PreToolUse` in the Agent SDK) gives deterministic compliance and can redirect to an alternative workflow, which a prompt rule cannot guarantee.",
       "wrong": {
        "B": "Still probabilistic. A non-zero failure rate on a financial control is not acceptable when deterministic enforcement is available.",
        "C": "Runs after the money has moved and relies on reversal; the requirement is to prevent the action and redirect it before execution.",
@@ -475,7 +475,7 @@ window.DATA = {
       "B"
      ],
      "explanation": {
-      "correct": "Forced tool selection guarantees a specific tool runs first. Subsequent turns return to `\"auto\"` so the loop can call other tools and finish with text.",
+      "correct": "Forced tool selection guarantees a specific tool runs first. Subsequent turns return to `\"auto\"` so the loop can call other tools and finish with text. Current-API note: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1 reject `tool_choice` `\"any\"` and forced `{\"type\": \"tool\"}` with a 400 error; on those models you steer with `\"auto\"` plus an explicit instruction, `strict: true` on the tool, or structured outputs. The Exam Guide still lists `auto` / `any` / forced selection as tested knowledge, so answer per the guide.",
       "wrong": {
        "A": "`\"any\"` guarantees some tool call, but the model could choose `get_customer` or another tool instead of `classify_request`.",
        "C": "Probabilistic compliance; the requirement is a guarantee, which `tool_choice` provides.",
@@ -490,7 +490,7 @@ window.DATA = {
      "domain": 1,
      "ts": "1.4",
      "tests": "Structured handoff summary for humans without transcript access",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "Today `escalate_to_human` receives only `{\"customer_message\": \"<last message>\"}`. Human agents cannot see the conversation transcript and report spending 4 to 6 minutes re-asking customers for information the agent already gathered. What should you change?",
@@ -531,7 +531,7 @@ window.DATA = {
      "domain": 2,
      "ts": "2.4",
      "tests": "Project .mcp.json with environment variable expansion",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "Your team develops the support agent in Claude Code and all engineers need the shared orders MCP server. Currently each engineer hand-edits a personal config with their own API token, and a token was once committed by mistake. You want the server configuration in the repository without committing secrets. What should you do?",
@@ -813,7 +813,7 @@ window.DATA = {
       "E"
      ],
      "explanation": {
-      "correct": "`/memory` reveals which memory files are actually loaded in a session. Hierarchy placement explains inconsistency: user-level files are personal, and directory-level files load when Claude works in that directory.",
+      "correct": "`/memory` reveals which memory files are actually loaded in a session. Hierarchy placement explains inconsistency: user-level files are personal, and directory-level files load when Claude works in that directory. Current-docs note: `/memory` lists and opens the memory files for the user and project scopes, and `/context` shows which CLAUDE.md and rules files loaded at launch. The Exam Guide attributes the diagnosis to `/memory`.",
       "wrong": {
        "B": "Emphasis does not diagnose anything, and if the file is not loaded in the failing session it has no effect.",
        "C": "Destroys the existing configuration and does not identify why behavior varied.",
@@ -856,7 +856,7 @@ window.DATA = {
      "explanation": {
       "correct": "`context: fork` runs the skill in an isolated context, which keeps verbose or exploratory output out of the main conversation.",
       "wrong": {
-       "B": "Restricts which tools the skill may use but does not isolate its output from the main conversation.",
+       "B": "`allowed-tools` controls tool permissions during the skill; it does not isolate its output from the main conversation.",
        "C": "Always-loaded context makes the clutter worse and is meant for universal standards, not task workflows.",
        "D": "`argument-hint` only prompts for arguments; it does not stop the output from entering the main context."
       }
@@ -1033,14 +1033,14 @@ window.DATA = {
      "domain": 3,
      "ts": "3.4",
      "tests": "Plan-mode investigation then direct execution",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "You must migrate from `moment` to `date-fns` across 52 files. Two approaches are viable: a one-shot codemod, or an adapter module with an incremental rollout. They have different CI and risk implications, and usage patterns in the code are unknown. What is the best workflow?",
      "options": [
       {
        "id": "A",
-       "text": "Start direct execution on the first ten files and extrapolate the approach to the rest."
+       "text": "Skip the investigation and run a one-shot codemod across all 52 files right away, since it is the faster of the two approaches."
       },
       {
        "id": "B",
@@ -1061,7 +1061,7 @@ window.DATA = {
      "explanation": {
       "correct": "Plan mode is built for multi-file changes with multiple valid approaches. Combining plan-mode investigation with direct execution for implementation avoids rework and still moves fast.",
       "wrong": {
-       "A": "Commits to an approach before the usage patterns and tradeoffs are known, risking costly rework.",
+       "A": "Commits to one approach before the usage patterns and the CI/risk tradeoffs are known; a codemod that meets unexpected patterns forces rework across all 52 files.",
        "C": "Assumes the right design without exploring the code, which is the failure mode plan mode prevents.",
        "D": "A partial plan is exposed to dependencies that surface later in the remaining 42 files."
       }
@@ -1402,7 +1402,7 @@ window.DATA = {
      "domain": 1,
      "ts": "1.2",
      "tests": "Iterative refinement loop driven by the coordinator",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "Stakeholders require coverage of all major regions. The synthesis subagent returns a draft with the note \"No evidence found for Southeast Asia; no 2024 market-size figures.\" Currently the coordinator forwards drafts straight to the report subagent. What should the coordinator do?",
@@ -1469,7 +1469,7 @@ window.DATA = {
       "D"
      ],
      "explanation": {
-      "correct": "Subagents are spawned through the Task tool, so the coordinator must be allowed to use it.",
+      "correct": "Subagents are spawned through the Task tool, so the coordinator must be allowed to use it. Naming note: the Exam Guide calls this the Task tool. Current Agent SDK versions name it `Agent` in `allowedTools` and in `tool_use` blocks (older versions used `Task`, and it still appears as `Task` in the init tools list). On the exam, use the guide's name.",
       "wrong": {
        "A": "Description length does not prevent spawning; the coordinator lacks the tool to spawn at all.",
        "B": "Parallel launching is an optimization; it is not a prerequisite for delegation.",
@@ -1551,7 +1551,7 @@ window.DATA = {
       "A"
      ],
      "explanation": {
-      "correct": "Parallel subagents are created by emitting multiple Task calls in one coordinator response, not across separate turns.",
+      "correct": "Parallel subagents are created by emitting multiple Task calls in one coordinator response, not across separate turns. Naming note: the Exam Guide calls this the Task tool. Current Agent SDK versions name it `Agent` in `allowedTools` and in `tool_use` blocks (older versions used `Task`, and it still appears as `Task` in the init tools list). On the exam, use the guide's name.",
       "wrong": {
        "B": "Does not improve latency and removes the benefit of specialization.",
        "C": "Invents a configuration option that does not exist.",
@@ -1607,7 +1607,7 @@ window.DATA = {
      "domain": 1,
      "ts": "1.6",
      "tests": "Adaptive decomposition for open-ended research",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "You are asked for a competitive landscape of AI chip startups. Which companies matter, and what sub-questions are important, cannot be known until initial research is done. A teammate proposes a fixed five-step pipeline with ten predetermined company profiles. What is the best approach?",
@@ -1648,7 +1648,7 @@ window.DATA = {
      "domain": 2,
      "ts": "2.1",
      "tests": "Split a generic tool into purpose-specific tools",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "The document-analysis subagent has one tool, `analyze_document(doc_id, instruction)`, used for pulling figures, summarizing, and fact-checking claims. Output shape varies widely by instruction and the synthesis agent cannot reliably parse it. What is the best redesign?",
@@ -1858,7 +1858,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.3",
      "tests": "Coverage annotations for gaps from unavailable sources",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "A research run on global lithium supply finishes with partial results: the \"South American production\" search subagent exhausted local retries because its main sources were unavailable, and returned a structured error. Other topics succeeded. How should the final report handle this?",
@@ -2130,7 +2130,7 @@ window.DATA = {
       "D"
      ],
      "explanation": {
-      "correct": "Tool use with a JSON schema is the most reliable way to get schema-compliant structured output and removes JSON syntax and formatting problems.",
+      "correct": "Tool use with a JSON schema is the most reliable way to get schema-compliant structured output and removes JSON syntax and formatting problems. Current-API note: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1 reject `tool_choice` `\"any\"` and forced `{\"type\": \"tool\"}` with a 400 error; on those models you steer with `\"auto\"` plus an explicit instruction, `strict: true` on the tool, or structured outputs. The Exam Guide still lists `auto` / `any` / forced selection as tested knowledge, so answer per the guide.",
       "wrong": {
        "A": "Handles one symptom of unstructured text output and is fragile against other deviations.",
        "B": "Adds cost and latency, and leaves a failure rate that structured output avoids.",
@@ -2726,7 +2726,7 @@ window.DATA = {
       "C"
      ],
      "explanation": {
-      "correct": "Tool-call interception hooks run before the tool executes, so the refund is never issued and the call can be redirected to human escalation. Hooks give deterministic guarantees where prompt instructions only give probabilistic compliance.",
+      "correct": "Tool-call interception hooks (`PreToolUse` in the Agent SDK, returning a deny decision) run before the tool executes, so the refund is never issued and the call can be redirected to human escalation. Hooks give deterministic guarantees where prompt instructions only give probabilistic compliance.",
       "wrong": {
        "A": "`PostToolUse` fires after the tool has already run. The refund would already have been paid, so the hook only escalates after the damage is done.",
        "B": "Rewriting the result after the fact hides that the money has actually been moved; it does not prevent the refund.",
@@ -3269,7 +3269,7 @@ window.DATA = {
       "A"
      ],
      "explanation": {
-      "correct": "Subagents are invoked through the Task tool, and the coordinator can only call it if `\"Task\"` is in its `allowedTools`. Without it, the coordinator has no mechanism to delegate.",
+      "correct": "Subagents are invoked through the Task tool, and the coordinator can only call it if `\"Task\"` is in its `allowedTools`. Without it, the coordinator has no mechanism to delegate. Naming note: the Exam Guide calls this the Task tool. Current Agent SDK versions name it `Agent` in `allowedTools` and in `tool_use` blocks (older versions used `Task`, and it still appears as `Task` in the init tools list). On the exam, use the guide's name.",
       "wrong": {
        "B": "Clear descriptions are what help the coordinator choose a subagent; they do not suppress delegation.",
        "C": "The permission to spawn belongs to the coordinator. Giving subagents `Task` would let them spawn others, not enable the coordinator to call them.",
@@ -3310,7 +3310,7 @@ window.DATA = {
       "D"
      ],
      "explanation": {
-      "correct": "Parallel subagents are created by emitting multiple Task tool calls in a single coordinator response rather than across separate turns. The independent subtopics then execute concurrently.",
+      "correct": "Parallel subagents are created by emitting multiple Task tool calls in a single coordinator response rather than across separate turns. The independent subtopics then execute concurrently. Naming note: the Exam Guide calls this the Task tool. Current Agent SDK versions name it `Agent` in `allowedTools` and in `tool_use` blocks (older versions used `Task`, and it still appears as `Task` in the init tools list). On the exam, use the guide's name.",
       "wrong": {
        "A": "Planning room is not the bottleneck; the delegation pattern across turns is.",
        "B": "Subagents do not share memory, and extra coordination would not change the turn-by-turn delegation that serializes the work.",
@@ -3556,7 +3556,7 @@ window.DATA = {
       "A"
      ],
      "explanation": {
-      "correct": "`tool_choice: \"any\"` guarantees that the model returns a tool call rather than text while leaving the choice among tools to the model, which suits an unknown document type.",
+      "correct": "`tool_choice: \"any\"` guarantees that the model returns a tool call rather than text while leaving the choice among tools to the model, which suits an unknown document type. Current-API note: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1 reject `tool_choice` `\"any\"` and forced `{\"type\": \"tool\"}` with a 400 error; on those models you steer with `\"auto\"` plus an explicit instruction, `strict: true` on the tool, or structured outputs. The Exam Guide still lists `auto` / `any` / forced selection as tested knowledge, so answer per the guide.",
       "wrong": {
        "B": "Forcing one named tool would apply the findings schema to documents that are better served by table or citation extraction.",
        "C": "With `\"auto\"` the model may still reply in text; a prompt rule is only probabilistic.",
@@ -4268,7 +4268,7 @@ window.DATA = {
       "A"
      ],
      "explanation": {
-      "correct": "`context: fork` runs the skill in its own subagent context so verbose intermediate output does not pollute the main conversation, and `allowed-tools` limits what the skill can do while it runs.",
+      "correct": "`context: fork` runs the skill in its own subagent context so verbose intermediate output does not pollute the main conversation, and `allowed-tools` limits what the skill can do while it runs. Current-docs note: in today's Claude Code, `allowed-tools` pre-approves the listed tools (no permission prompt) rather than removing the others, and `disallowed-tools` is the field that removes tools. The Exam Guide describes `allowed-tools` as restricting tool access during skill execution, so answer per the guide.",
       "wrong": {
        "B": "CLAUDE.md is always-loaded context and would add to the clutter; it does not isolate the output of a task.",
        "C": "Compacting after the fact is lossy and manual; isolation prevents the pollution altogether.",
@@ -4283,7 +4283,7 @@ window.DATA = {
      "domain": 3,
      "ts": "3.3",
      "tests": "Path-specific rules with glob patterns for conventions spread across directories",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "Terraform files (`*.tf`) live in `infra/`, `services/*/deploy/`, and `tools/provisioning/`. They need specific conventions (naming, module layout), but those conventions should not consume context when developers are editing application code. What is the most maintainable setup?",
@@ -4529,7 +4529,7 @@ window.DATA = {
      "domain": 3,
      "ts": "3.6",
      "tests": "Providing existing test files to avoid duplicate test scenarios",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "The CI test-generation job proposes tests for `OrderService`, but about half of them duplicate scenarios that already exist in `OrderService.test.ts` (for example, empty cart handling). What is the most effective change?",
@@ -4734,7 +4734,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.1",
      "tests": "Explicit severity criteria with concrete code examples",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "The same string-concatenated SQL query was labeled `critical` on one PR and `minor` on another. Your prompt asks for `critical`, `major`, or `minor` ratings without further definition. What most reliably produces consistent severity?",
@@ -4816,7 +4816,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.4",
      "tests": "detected_pattern field to analyze false-positive patterns from dismissals",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "Developers dismiss roughly 30% of the review bot's findings, but nobody can tell which kinds of code constructs trigger the dismissed findings. What should you add to enable systematic analysis?",
@@ -5026,7 +5026,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.3",
      "tests": "Enum with 'other' plus detail string for extensible categories",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "Your `--json-schema` for review findings has `category` as an enum of `bug`, `security`, `performance`, and `style`. Accessibility and concurrency issues are being forced into `style`, which pollutes dashboards. What schema change is best?",
@@ -5269,7 +5269,7 @@ window.DATA = {
       "B"
      ],
      "explanation": {
-      "correct": "Subagents run with isolated context and do not inherit the coordinator's history or share memory, so everything they need (customer ID, order data, dispute details) must be included explicitly in the Task prompt.",
+      "correct": "Subagents run with isolated context and do not inherit the coordinator's history or share memory, so everything they need (customer ID, order data, dispute details) must be included explicitly in the Task prompt. Naming note: the Exam Guide calls this the Task tool. Current Agent SDK versions name it `Agent` in `allowedTools` and in `tool_use` blocks (older versions used `Task`, and it still appears as `Task` in the init tools list). On the exam, use the guide's name.",
       "wrong": {
        "A": "No automatic shared memory exists between invocations; context must be passed explicitly.",
        "C": "The AgentDefinition prompt cannot make the subagent see a parent conversation it never receives.",
@@ -5336,11 +5336,11 @@ window.DATA = {
       },
       {
        "id": "B",
-       "text": "Raise the sentiment threshold so that only extremely negative messages trigger escalation, tuning the cutoff on a sample of last month's conversations, re-checking the threshold each quarter."
+       "text": "Raise the sentiment threshold so that only extremely negative messages trigger escalation, tuning the cutoff on a sample of last month's conversations."
       },
       {
        "id": "C",
-       "text": "Ask the agent to self-rate its confidence from 1 to 10 before each response and automatically escalate to a human when the rating is below 7, and route low-rated conversations to the human queue automatically."
+       "text": "Ask the agent to self-rate its confidence from 1 to 10 before each response and automatically route conversations rated below 7 to the human queue."
       },
       {
        "id": "D",
@@ -5535,7 +5535,7 @@ window.DATA = {
      "domain": 1,
      "ts": "1.4",
      "tests": "Compiling structured handoff summaries for human agents who lack the transcript",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "When the agent calls `escalate_to_human`, it currently passes only `{\"reason\": \"customer unhappy\"}`. Human agents cannot see the conversation transcript, so they re-ask the customer for everything, and handle times have increased by several minutes. What is the best improvement?",
@@ -5725,7 +5725,7 @@ window.DATA = {
       "D"
      ],
      "explanation": {
-      "correct": "`/memory` shows which memory files are loaded, making it the way to diagnose inconsistent behavior across sessions (for example conventions living only in one user's `~/.claude/CLAUDE.md`, which is not shared via version control).",
+      "correct": "`/memory` shows which memory files are loaded, making it the way to diagnose inconsistent behavior across sessions (for example conventions living only in one user's `~/.claude/CLAUDE.md`, which is not shared via version control). Current-docs note: `/memory` lists and opens the memory files for the user and project scopes, and `/context` shows which CLAUDE.md and rules files loaded at launch. The Exam Guide attributes the diagnosis to `/memory`.",
       "wrong": {
        "A": "A fresh clone gives the same tracked files; it does not reveal which untracked or user-level memory files differ.",
        "B": "This may mask the cause without establishing why the sessions differ, and emphasis is not enforcement.",
@@ -5743,7 +5743,7 @@ window.DATA = {
      "difficulty": "medium",
      "type": "single",
      "select": 1,
-     "stem": "Your team's `/release-notes` skill reads `.release/changes.md` and writes `CHANGELOG.md`. A teammate worries that during execution the skill might run an unintended shell command such as `git reset` or `rm`. You want the restriction to be enforced, not requested. What should you do?",
+     "stem": "Your team's `/release-notes` skill reads `.release/changes.md` and writes `CHANGELOG.md`. A teammate worries that during execution the skill might run an unintended shell command such as `git reset` or `rm`. You want this controlled in the skill's own configuration rather than by a prompt instruction. What should you do?",
      "options": [
       {
        "id": "A",
@@ -5766,7 +5766,7 @@ window.DATA = {
       "A"
      ],
      "explanation": {
-      "correct": "Skill frontmatter `allowed-tools` limits the tools available during skill execution, which prevents destructive actions by construction.",
+      "correct": "Skill frontmatter `allowed-tools` is the field the Exam Guide names for restricting tool access during skill execution, so the limit lives in the skill's configuration rather than in a prompt. Current-docs note: in today's Claude Code, `allowed-tools` pre-approves the listed tools (no permission prompt) rather than removing the others, and `disallowed-tools` is the field that removes tools. The Exam Guide describes `allowed-tools` as restricting tool access during skill execution, so answer per the guide.",
       "wrong": {
        "B": "CLAUDE.md is context, not enforcement; the model could still run the command.",
        "C": "Forking isolates the skill's output and context from the main conversation but does not restrict which tools it can use.",
@@ -5945,7 +5945,7 @@ window.DATA = {
      "domain": 3,
      "ts": "3.2",
      "tests": "Using context: fork to isolate skills with verbose output",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "The `/analyze-deps` skill scans 300 files and prints roughly 25,000 tokens of intermediate output into the conversation. Developers only need the final 20-line summary, but the verbose output crowds out their ongoing work. What is the best change?",
@@ -6073,7 +6073,7 @@ window.DATA = {
      "domain": 3,
      "ts": "3.5",
      "tests": "Addressing interacting issues in one message versus sequential fixes for independent issues",
-     "difficulty": "medium",
+     "difficulty": "hard",
      "type": "single",
      "select": 1,
      "stem": "After a refactor, three tests fail. (1) `listOrders` paginates with an off-by-one; (2) `calcTotal` rounds tax incorrectly, and `listOrders` uses `calcTotal` for page totals, so fixing either one changes the other's expected output; (3) an unrelated import path in `exportJob.ts` is broken. How should you prompt Claude to fix them?",
@@ -6155,7 +6155,7 @@ window.DATA = {
      "domain": 1,
      "ts": "1.6",
      "tests": "Decomposing open-ended tasks by mapping structure, prioritizing, and adapting the plan",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "You ask Claude to \"add comprehensive tests to our 80K-line legacy billing codebase\". The team's first attempt used a fixed instruction: \"for each file in alphabetical order, generate unit tests.\" After a day, there are many tests for trivial utility files, but the core `InvoiceEngine` and `ProrationService` modules are untested. What is the better decomposition?",
@@ -6601,7 +6601,7 @@ window.DATA = {
       "D"
      ],
      "explanation": {
-      "correct": "Parallel subagents are spawned by emitting multiple Task tool calls in a single coordinator response rather than across separate turns.",
+      "correct": "Parallel subagents are spawned by emitting multiple Task tool calls in a single coordinator response rather than across separate turns. Naming note: the Exam Guide calls this the Task tool. Current Agent SDK versions name it `Agent` in `allowedTools` and in `tool_use` blocks (older versions used `Task`, and it still appears as `Task` in the init tools list). On the exam, use the guide's name.",
       "wrong": {
        "A": "This serializes the work inside one context and removes the isolation that keeps each analysis focused.",
        "B": "This doesn't change the sequential turn structure, and skipping verification reduces quality.",
@@ -6642,7 +6642,7 @@ window.DATA = {
       "B"
      ],
      "explanation": {
-      "correct": "The Task tool is the mechanism for spawning subagents, and `allowedTools` must include `\"Task\"` for a coordinator to invoke them.",
+      "correct": "The Task tool is the mechanism for spawning subagents, and `allowedTools` must include `\"Task\"` for a coordinator to invoke them. Naming note: the Exam Guide calls this the Task tool. Current Agent SDK versions name it `Agent` in `allowedTools` and in `tool_use` blocks (older versions used `Task`, and it still appears as `Task` in the init tools list). On the exam, use the guide's name.",
       "wrong": {
        "A": "`Task` belongs to the invoking agent's allowed tools, not the subagent's tool list.",
        "C": "`fork_session` creates branches from a shared baseline; it isn't what makes subagent delegation available.",
@@ -6657,7 +6657,7 @@ window.DATA = {
      "domain": 1,
      "ts": "1.2",
      "tests": "Implementing iterative refinement loops that re-delegate on coverage gaps",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "A coordinator produces codebase onboarding reports through a single pass: explore subagents, then a synthesis subagent. Reviewers find that the data layer and the CI/CD sections are consistently thin because the explorers focused on the web layer. You need better coverage without re-running everything. What is the best design?",
@@ -6821,7 +6821,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.4",
      "tests": "Summarizing key findings from one exploration phase before spawning subagents",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "Phase 1 of a legacy-system exploration produced a module map, three high-risk areas, and entry points; the transcript is about 90K tokens. In Phase 2 you spawn three subagents, one per risk area, but each begins by rediscovering the module map and spends much of its budget on it. What is the best fix?",
@@ -6903,7 +6903,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.4",
      "tests": "Designing crash recovery using state exports and a manifest",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "A long-running multi-agent analysis with six subagents crashed after three hours, and the restart began from scratch, repeating completed work. You need crash recovery. What design is best?",
@@ -6970,7 +6970,7 @@ window.DATA = {
       "C"
      ],
      "explanation": {
-      "correct": "`\"any\"` guarantees that a tool is called while letting the model pick which schema fits, ideal when multiple extraction schemas exist and the document type is unknown.",
+      "correct": "`\"any\"` guarantees that a tool is called while letting the model pick which schema fits, ideal when multiple extraction schemas exist and the document type is unknown. Current-API note: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1 reject `tool_choice` `\"any\"` and forced `{\"type\": \"tool\"}` with a 400 error; on those models you steer with `\"auto\"` plus an explicit instruction, `strict: true` on the tool, or structured outputs. The Exam Guide still lists `auto` / `any` / forced selection as tested knowledge, so answer per the guide.",
       "wrong": {
        "A": "Forcing a single tool would apply the invoice schema to receipts and purchase orders.",
        "B": "This is probabilistic; `tool_choice` gives a guarantee.",
@@ -7011,7 +7011,7 @@ window.DATA = {
       "C"
      ],
      "explanation": {
-      "correct": "Forced tool selection ensures a specific tool runs first (such as metadata extraction before enrichment), with subsequent steps processed in follow-up turns.",
+      "correct": "Forced tool selection ensures a specific tool runs first (such as metadata extraction before enrichment), with subsequent steps processed in follow-up turns. Current-API note: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1 reject `tool_choice` `\"any\"` and forced `{\"type\": \"tool\"}` with a 400 error; on those models you steer with `\"auto\"` plus an explicit instruction, `strict: true` on the tool, or structured outputs. The Exam Guide still lists `auto` / `any` / forced selection as tested knowledge, so answer per the guide.",
       "wrong": {
        "A": "A prompt instruction is probabilistic; forced tool selection guarantees the order for that first call.",
        "B": "This creates a bloated tool and sacrifices the staged workflow instead of ensuring the order.",
@@ -7026,7 +7026,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.3",
      "tests": "Designing optional/nullable fields to prevent fabrication",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "Your invoice schema marks `po_number` as a required string. For invoices that don't contain a PO number, the model returns values such as \"N/A\" or a made-up \"PO-0000\", which then pollute the downstream matching system. What is the best schema change?",
@@ -7359,7 +7359,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.5",
      "tests": "Handling batch failures by custom_id with appropriate modifications",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "You submitted a Message Batches job of 10,000 documents. Results: 9,640 succeeded; 360 failed. Of the failures, 340 exceeded the context limit (very long contracts) and 20 were transient server errors. What is the best next step?",
@@ -7607,7 +7607,7 @@ window.DATA = {
       "A"
      ],
      "explanation": {
-      "correct": "Tool-call interception gives a deterministic guarantee. The gate runs before execution, regardless of what the model decides, and the error message lets the agent recover by calling `get_customer`. This is the programmatic-prerequisite pattern.",
+      "correct": "Tool-call interception (a `PreToolUse` hook) gives a deterministic guarantee. The gate runs before execution, regardless of what the model decides, and the error message lets the agent recover by calling `get_customer`. This is the programmatic-prerequisite pattern.",
       "wrong": {
        "B": "Prompt emphasis is still probabilistic compliance. The non-zero failure rate remains, which is unacceptable when each violation is a reportable incident.",
        "C": "Tool descriptions guide selection and usage but do not enforce anything. The model can still call the tool out of order; the rule needs a gate outside the model.",
@@ -7663,7 +7663,7 @@ window.DATA = {
      "domain": 1,
      "ts": "1.4",
      "tests": "Structured handoff summaries for human agents who lack the conversation transcript",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "When the agent calls `escalate_to_human`, it passes only a short `reason` string such as \"customer upset, wants refund\". Human agents cannot see the conversation transcript and report that they re-ask customers for the order, amounts, and what was already tried. What is the best fix?",
@@ -7832,7 +7832,7 @@ window.DATA = {
      "domain": 2,
      "ts": "2.3",
      "tests": "Using forced tool_choice so a specific tool is called first, then processing later steps in follow-up turns",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "Every conversation must begin with a structured triage call to `classify_request` (issue type, urgency, any IDs mentioned) before any backend lookup. With `tool_choice: \"auto\"`, 7% of conversations skip it: the agent jumps straight to `get_customer` or replies with plain text. Which configuration fixes this without breaking the rest of the workflow?",
@@ -7858,7 +7858,7 @@ window.DATA = {
       "B"
      ],
      "explanation": {
-      "correct": "Forced tool selection guarantees `classify_request` runs first. Switching back to `auto` afterward lets the agent call the backend tools and eventually end its turn.",
+      "correct": "Forced tool selection guarantees `classify_request` runs first. Switching back to `auto` afterward lets the agent call the backend tools and eventually end its turn. Current-API note: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1 reject `tool_choice` `\"any\"` and forced `{\"type\": \"tool\"}` with a 400 error; on those models you steer with `\"auto\"` plus an explicit instruction, `strict: true` on the tool, or structured outputs. The Exam Guide still lists `auto` / `any` / forced selection as tested knowledge, so answer per the guide.",
       "wrong": {
        "A": "`any` guarantees some tool call but not which one, so the agent could still call `get_customer` first.",
        "C": "This is prompt-based and probabilistic, which is the mechanism already failing 7% of the time.",
@@ -7955,7 +7955,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.2",
      "tests": "Asking for additional identifiers when tool results return multiple matches",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "A customer writes: \"Hi, this is Maria Garcia, I want to return my jacket.\" `get_customer` returns three matching Maria Garcia accounts. In the current design the agent picks the account with the most recent order, and two wrong-account refunds were logged last month. What should the agent do instead?",
@@ -8355,7 +8355,7 @@ window.DATA = {
       "A"
      ],
      "explanation": {
-      "correct": "Subagents are spawned through the Task tool, so the coordinator's `allowedTools` must include `\"Task\"`.",
+      "correct": "Subagents are spawned through the Task tool, so the coordinator's `allowedTools` must include `\"Task\"`. Naming note: the Exam Guide calls this the Task tool. Current Agent SDK versions name it `Agent` in `allowedTools` and in `tool_use` blocks (older versions used `Task`, and it still appears as `Task` in the init tools list). On the exam, use the guide's name.",
       "wrong": {
        "B": "Long descriptions affect selection quality, not whether a subagent can be invoked at all.",
        "C": "`any` forces some tool call but cannot make a missing Task tool available. The coordinator could not delegate even then.",
@@ -8744,7 +8744,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.6",
      "tests": "Temporal data and conflict annotation instead of arbitrarily choosing a value",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "multi",
      "select": 2,
      "stem": "Two credible reports give different electric-vehicle market shares for Country X: 14% and 18%. The synthesis agent calls them contradictory and reports only the higher number. Reading the sources, the 14% figure was collected in 2022 and the 18% figure in 2023. Which TWO changes best fix this? (Select TWO.)",
@@ -8790,7 +8790,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.4",
      "tests": "Structured state persistence for crash recovery using manifests",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "A multi-hour research run crashes at minute 70, and on restart the coordinator starts from scratch, losing about an hour of subagent work. What is the best way to make recovery reliable?",
@@ -8831,7 +8831,7 @@ window.DATA = {
      "domain": 3,
      "ts": "3.6",
      "tests": "Providing existing test files in context so test generation avoids duplicate scenarios",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "A CI job runs `claude -p` on each PR to propose new unit tests. Reviewers find that about 40% of the proposed tests duplicate scenarios already covered in the module's existing test file. What is the most effective fix?",
@@ -8954,7 +8954,7 @@ window.DATA = {
      "domain": 3,
      "ts": "3.6",
      "tests": "Including prior review findings when re-running reviews after new commits",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "multi",
      "select": 2,
      "stem": "Each new commit to a PR triggers a fresh `claude -p` review, and the bot re-posts comments for issues it already reported and developers already fixed or acknowledged. Which TWO changes best fix the duplicate comments? (Select TWO.)",
@@ -9205,7 +9205,7 @@ window.DATA = {
      "domain": 3,
      "ts": "3.5",
      "tests": "Providing all issues in a single message when fixes interact versus sequential iteration",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "A generated PR-summary template has three problems: it is too long, it drops the required severity field, and the dedupe rule hides low-severity notes. Shortening the template tends to remove the severity field, and the dedupe rule depends on that field. How should you request the fixes?",
@@ -9234,7 +9234,7 @@ window.DATA = {
       "correct": "When fixes interact, they should be given in a single message. Changing one in isolation would break another.",
       "wrong": {
        "B": "Sequential fixes make sense for independent problems. Here shortening can remove the severity field again.",
-       "C": "The others are independent causes and will not resolve themselves.",
+       "C": "The other two problems have their own causes and will not resolve themselves.",
        "D": "Merging three separately edited templates recreates the interactions you needed to handle together."
       }
      },
@@ -9369,7 +9369,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.4",
      "tests": "detected_pattern field to analyze false-positive dismissal patterns",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "Developers dismiss about 30% of automated review findings, but the team cannot tell which kinds of code constructs trigger the false positives. What should you add to the structured finding output?",
@@ -9518,7 +9518,7 @@ window.DATA = {
       "A"
      ],
      "explanation": {
-      "correct": "`any` guarantees a tool call while letting the model choose the right schema for an unknown document type.",
+      "correct": "`any` guarantees a tool call while letting the model choose the right schema for an unknown document type. Current-API note: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1 reject `tool_choice` `\"any\"` and forced `{\"type\": \"tool\"}` with a 400 error; on those models you steer with `\"auto\"` plus an explicit instruction, `strict: true` on the tool, or structured outputs. The Exam Guide still lists `auto` / `any` / forced selection as tested knowledge, so answer per the guide.",
       "wrong": {
        "B": "Forcing one tool would make contracts and receipts be extracted with the invoice schema.",
        "C": "The structured output is still not guaranteed because the model may return text; this is prompt-level compliance.",
@@ -9533,7 +9533,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.3",
      "tests": "Enum values such as unclear and other plus a detail field for extensible categories",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "The schema field `document_category` is an enum of six values. New document types such as customs declarations appear, and the model forces them into the closest wrong category, polluting downstream reports. Which schema change is best?",
@@ -9615,7 +9615,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.4",
      "tests": "Self-correction validation: calculated_total alongside stated_total and conflict_detected",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "Schema validation passes for every extraction, but in 4% of invoices the line items do not add up to the stated total. A teammate suggests enabling strict mode so the numbers are always consistent. What should you do?",
@@ -9656,7 +9656,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.4",
      "tests": "Retry limits: effective for format errors, ineffective when information is absent from the source",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "Two validation failures appear in the retry queue. Failure 1: `invoice_date` was extracted as \"March 3rd\" and fails the ISO 8601 pattern. Failure 2: `vendor_tax_id` is empty, and the document states \"Tax ID: see attached W-9\", which was not provided. How should the pipeline handle them?",
@@ -9866,7 +9866,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.5",
      "tests": "Routing low-confidence or contradictory extractions to human review given limited capacity",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "Two reviewers can check about 300 documents a day, but 2,000 documents arrive daily. How should you decide which extractions get human review?",
@@ -9907,7 +9907,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.5",
      "tests": "Aggregate accuracy masking poor segment performance; validate by document type and field",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "Validation shows 97% overall accuracy, above your 95% automation threshold, and you plan to auto-approve high-confidence extractions. The mix is: typed invoices (90% of volume, 98.8% accurate), scanned receipts (8%, 88%), and handwritten notes (2%, 70%). What should you do before automating?",
@@ -10030,7 +10030,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.6",
      "tests": "Including conflicting values with annotations rather than arbitrarily selecting one",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "A purchase order lists a total of $1,200, while the matching invoice for the same order lists $1,250. The pipeline currently keeps whichever document is newer and discards the other. What is a better design?",
@@ -10386,7 +10386,7 @@ window.DATA = {
       },
       {
        "id": "B",
-       "text": "Switch to a model with a larger context window and continue the session unchanged, whose bigger window gives the long discovery history room to fit without any need to condense or restart."
+       "text": "Switch to a model with a larger context window and continue the session unchanged, since the bigger window gives the discovery history room without condensing anything."
       },
       {
        "id": "C",
@@ -10416,7 +10416,7 @@ window.DATA = {
      "domain": 1,
      "ts": "1.6",
      "tests": "Decomposing open-ended tasks by mapping structure, prioritizing, and adapting the plan",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "You are asked to add comprehensive tests to a 120k-line legacy codebase that has almost none. Your first attempt was the prompt \"Write tests for everything in `src/`, module by module in alphabetical order.\" After a day, many tests cover trivial utilities while the payment core is untested, and several later modules turned out to depend on helpers that must be refactored before they can be tested. How should you restructure the work?",
@@ -10483,7 +10483,7 @@ window.DATA = {
       "B"
      ],
      "explanation": {
-      "correct": "`/memory` shows which memory files (user, project, directory-level) are actually loaded in a session, so you can see, for example, that conventions live in one developer's `~/.claude/CLAUDE.md` or that a file is missing.",
+      "correct": "`/memory` shows which memory files (user, project, directory-level) are actually loaded in a session, so you can see, for example, that conventions live in one developer's `~/.claude/CLAUDE.md` or that a file is missing. Current-docs note: `/memory` lists and opens the memory files for the user and project scopes, and `/context` shows which CLAUDE.md and rules files loaded at launch. The Exam Guide attributes the diagnosis to `/memory`.",
       "wrong": {
        "A": "Claude's recitation is not a reliable record of what was loaded and does not reveal which file each instruction came from.",
        "C": "Re-cloning the repository does not touch user-level memory files and would not explain the difference if the project files are identical.",
@@ -10509,7 +10509,7 @@ window.DATA = {
       },
       {
        "id": "B",
-       "text": "Tell Claude in the next message to try harder to recall the specific classes it found earlier, which costs nothing and tells it plainly what standard of answer you expect from now on."
+       "text": "Tell Claude in the next message to try harder to recall the specific classes it found earlier, which costs nothing and sets the standard of answer you expect."
       },
       {
        "id": "C",
@@ -10662,7 +10662,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.4",
      "tests": "Summarizing findings from one exploration phase and injecting them into the next phase",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "Phase 1 of a refactor, mapping the authentication module, is finished and produced about 80k tokens of exploration output. For phase 2 you will spawn three subagents to implement changes in the session, token, and middleware layers. Each subagent runs with its own isolated context. How should you give them what they need from phase 1?",
@@ -10898,7 +10898,7 @@ window.DATA = {
       "D"
      ],
      "explanation": {
-      "correct": "Parallel subagents are spawned by emitting multiple Task tool calls in one coordinator response, rather than across separate turns.",
+      "correct": "Parallel subagents are spawned by emitting multiple Task tool calls in one coordinator response, rather than across separate turns. Naming note: the Exam Guide calls this the Task tool. Current Agent SDK versions name it `Agent` in `allowedTools` and in `tool_use` blocks (older versions used `Task`, and it still appears as `Task` in the init tools list). On the exam, use the guide's name.",
       "wrong": {
        "A": "No such AgentDefinition option exists; parallelism comes from multiple Task calls in one coordinator response.",
        "B": "This removes parallelism and loads one subagent with all subtopics, reducing focus.",
@@ -10954,7 +10954,7 @@ window.DATA = {
      "domain": 1,
      "ts": "1.2",
      "tests": "Iterative refinement loop: coordinator evaluates synthesis for gaps and re-delegates",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "A report on \"renewable energy policy in Southeast Asia\" covers Indonesia and Vietnam well but has no content on the Philippines or Thailand. The search, analysis, and synthesis subagents each performed correctly on what they were given, and the pipeline runs once, in a fixed order. What design change best improves coverage?",
@@ -11067,7 +11067,7 @@ window.DATA = {
       "C"
      ],
      "explanation": {
-      "correct": "`\"auto\"` allows text responses, `\"any\"` guarantees a tool call while letting the model choose which, and forced selection names one tool. 'any' fits when multiple tools are valid.",
+      "correct": "`\"auto\"` allows text responses, `\"any\"` guarantees a tool call while letting the model choose which, and forced selection names one tool. 'any' fits when multiple tools are valid. Current-API note: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1 reject `tool_choice` `\"any\"` and forced `{\"type\": \"tool\"}` with a 400 error; on those models you steer with `\"auto\"` plus an explicit instruction, `strict: true` on the tool, or structured outputs. The Exam Guide still lists `auto` / `any` / forced selection as tested knowledge, so answer per the guide.",
       "wrong": {
        "A": "Forcing one tool guarantees a call but removes the model's ability to choose among the three plans.",
        "B": "This relies on probabilistic compliance when the requirement can be enforced through `tool_choice`.",
@@ -11231,7 +11231,7 @@ window.DATA = {
       "B"
      ],
      "explanation": {
-      "correct": "The Task tool is the mechanism for spawning subagents, and the coordinator's `allowedTools` must include \"Task\" for it to delegate.",
+      "correct": "The Task tool is the mechanism for spawning subagents, and the coordinator's `allowedTools` must include \"Task\" for it to delegate. Naming note: the Exam Guide calls this the Task tool. Current Agent SDK versions name it `Agent` in `allowedTools` and in `tool_use` blocks (older versions used `Task`, and it still appears as `Task` in the init tools list). On the exam, use the guide's name.",
       "wrong": {
        "A": "Subagent tool lists affect what they can do after being spawned, not whether the coordinator can invoke them.",
        "C": "Four short definitions would not exhaust context, and that would cause errors, not silent non-delegation.",
@@ -11246,7 +11246,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.6",
      "tests": "Rendering different content types appropriately in synthesis output",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "The synthesis output is currently converted to uniform bulleted lists. Quarterly revenue comparisons across eight companies are hard to scan, and a news timeline loses its chronological narrative. What is the best fix?",
@@ -11328,7 +11328,7 @@ window.DATA = {
      "domain": 2,
      "ts": "2.5",
      "tests": "Tracing function usage across wrapper modules: enumerate exported names, then search each",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "multi",
      "select": 2,
      "stem": "Your agent must find every caller of an internal event emitter. The function `emitEvent` lives in `lib/telemetry/internal/emit.ts`, but application code imports it through the wrapper `lib/telemetry/index.ts`, which re-exports it under the names `trackEvent` and `logEvent`. Searching only for `emitEvent` finds just two call sites, yet the team knows there are many more. Which TWO steps will most reliably find all callers? (Select TWO.)",
@@ -11456,7 +11456,7 @@ window.DATA = {
      "domain": 2,
      "ts": "2.5",
      "tests": "Falling back to Read + Write when Edit cannot find unique anchor text",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "The agent tries to update a generated configuration file in which the same four-line block appears six times with only whitespace differences. Its `Edit` call fails with an error that the `old_string` matches multiple locations, and no short distinguishing anchor text exists near the target block. What should the agent do?",
@@ -11549,7 +11549,7 @@ window.DATA = {
       },
       {
        "id": "B",
-       "text": "Rewrite the system prompt with stronger wording and bold capitalization for these two rules, since explicit emphasis on the two rules makes them far more salient than the other instructions."
+       "text": "Rewrite the system prompt with stronger wording and bold capitalization for these two rules so that they stand out from the other instructions."
       },
       {
        "id": "C",
@@ -11702,7 +11702,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.4",
      "tests": "Crash recovery using structured agent state exports (manifests)",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "A long-running code migration uses a coordinator and five subagents, one per service. After roughly three hours, the coordinator process crashes, and the rerun begins from scratch, redoing finished work and sometimes making conflicting changes. What design best supports recovery?",
@@ -11866,7 +11866,7 @@ window.DATA = {
      "domain": 1,
      "ts": "1.4",
      "tests": "Decomposing multi-concern requests and investigating in parallel with shared context",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "A developer sends one message to the agent: \"Upgrade `lodash` in the API package, regenerate the OpenAPI client, and fix the lint failures in `/scripts`.\" The agent handles it as one blended stream and loses track, leaving the lint fixes half done. What is the best design?",
@@ -11907,7 +11907,7 @@ window.DATA = {
      "domain": 5,
      "ts": "5.1",
      "tests": "Trimming verbose tool outputs to relevant fields before they accumulate",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "An MCP tool `get_ticket` returns about 60 fields per ticket (full history, attachment metadata, audit trail), but the agent only needs `id`, `title`, `status`, `assignee`, and `linked_prs`. After about 25 lookups the context is largely filled with irrelevant fields. What is the best fix?",
@@ -11918,7 +11918,7 @@ window.DATA = {
       },
       {
        "id": "B",
-       "text": "Tell the agent in the system prompt to ignore irrelevant fields, since fields the model has been told to ignore will not affect its reasoning or cost anything."
+       "text": "Tell the agent in the system prompt to ignore irrelevant fields, since fields it has been told to ignore will not affect its reasoning."
       },
       {
        "id": "C",
@@ -11948,7 +11948,7 @@ window.DATA = {
      "domain": 3,
      "ts": "3.6",
      "tests": "Documenting testing standards, valuable test criteria, and fixtures in CLAUDE.md for CI",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "A CI job runs `claude -p` to generate tests for each pull request. The output includes trivial getter tests, recreates helpers that already exist in `tests/fixtures/`, and uses a mocking library the team has banned. What is the most effective way to improve quality?",
@@ -11989,7 +11989,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.1",
      "tests": "Temporarily disabling high false-positive categories while improving prompts",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "multi",
      "select": 2,
      "stem": "Your PR review bot reports four categories. Measured precision: security 90%, bugs 85%, naming/style 35%, comment accuracy 40%. Developers have started dismissing all bot comments, including the security findings. Which TWO actions best restore trust? (Select TWO.)",
@@ -12163,7 +12163,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.4",
      "tests": "Adding detected_pattern fields to analyze false-positive patterns from dismissals",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "Developers dismiss about 30% of the review bot's findings, but you cannot tell which kinds of code constructs are producing the dismissed findings. What change best enables systematic analysis?",
@@ -12286,7 +12286,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.1",
      "tests": "Defining explicit severity criteria with concrete code examples",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "The review bot labels similar null-dereference issues \"critical\" in some PRs and \"minor\" in others, so developers cannot triage reliably. The prompt currently says \"assign an appropriate severity.\" What change best produces consistent classification?",
@@ -12368,7 +12368,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.6",
      "tests": "Self-reported confidence with each finding to enable calibrated review routing",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "Human reviewers can examine about 20 flagged PRs per day, while the bot produces far more findings. You have 2,000 historical findings labeled correct or incorrect by senior engineers. Which design best uses reviewer capacity?",
@@ -12409,7 +12409,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.3",
      "tests": "Adding 'unclear' and 'other'+detail enum values for ambiguous cases",
-     "difficulty": "medium",
+     "difficulty": "easy",
      "type": "single",
      "select": 1,
      "stem": "A test-failure triage tool uses a JSON schema with `\"root_cause\": {\"enum\": [\"null_deref\", \"race_condition\", \"bad_config\"]}`. For failures that fit none of these or are ambiguous, the model must still pick one and often mislabels, which skews your reports. What is the best schema change?",
@@ -12532,7 +12532,7 @@ window.DATA = {
      "domain": 4,
      "ts": "4.4",
      "tests": "Identifying when retries with error feedback will and will not be effective",
-     "difficulty": "hard",
+     "difficulty": "medium",
      "type": "single",
      "select": 1,
      "stem": "Your pipeline extracts review findings into JSON validated with Pydantic. Two failures occur. Failure A: `line` is returned as the string `\"42-45\"` instead of an integer. Failure B: a finding refers to ownership described in `docs/OWNERS.md`, which is not part of the PR, so the required `owner_team` field cannot be filled and comes back as a plausible guess. How should you handle these?",
